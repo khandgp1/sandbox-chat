@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { generateReply } from './services/botEngine';
+import { getHistory, appendMessage } from './services/conversationStore';
 
 
 const app = express();
@@ -45,16 +46,24 @@ app.post('/message', (req: Request, res: Response) => {
   console.log(`[POST /message] userId=${userId} | message="${message}"`);
 
   // Log incoming message in memory
+  const timestamp = new Date().toISOString();
   const incoming: LogEntry = {
     direction: 'INCOMING',
     message: message.trim(),
     userId,
-    timestamp: new Date().toISOString(),
+    timestamp,
   };
   logs.push(incoming);
 
+  // Fetch history before generating the reply
+  const history = getHistory(userId);
+
   // Compute response
-  const reply = generateReply(message);
+  const reply = generateReply(message, history);
+
+  // Store message and response in conversation history
+  appendMessage(userId, { role: 'user', text: message.trim(), timestamp });
+  appendMessage(userId, { role: 'bot', text: reply, timestamp: new Date().toISOString() });
 
   // Log outgoing response in memory
   const outgoing: LogEntry = {

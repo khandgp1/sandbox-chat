@@ -325,10 +325,10 @@ Bot: Nice to meet you John
 
 ### Tasks
 
-* [ ] Add in-memory conversation store
-* [ ] Track message history
-* [ ] Pass history to bot engine
-* [ ] Support single sandbox user
+* [x] Add in-memory conversation store
+* [x] Track message history
+* [x] Pass history to bot engine
+* [x] Support single sandbox user
 
 ### Success Criteria
 
