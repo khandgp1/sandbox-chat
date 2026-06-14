@@ -261,11 +261,11 @@ Hi there
 
 ### Tasks
 
-* [ ] Create log panel
-* [ ] Log incoming messages
-* [ ] Log outgoing messages
-* [ ] Show timestamps
-* [ ] Keep logs in memory
+* [x] Create log panel
+* [x] Log incoming messages
+* [x] Log outgoing messages
+* [x] Show timestamps
+* [x] Keep logs in memory
 
 ### Success Criteria
 

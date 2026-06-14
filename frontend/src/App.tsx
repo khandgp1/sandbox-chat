@@ -10,6 +10,13 @@ interface Message {
   timestamp: string; // HH:MM
 }
 
+interface LogEntry {
+  direction: 'INCOMING' | 'OUTGOING';
+  message: string;
+  userId: string;
+  timestamp: string; // ISO string
+}
+
 // Sub-components
 
 // ChatHeader component
@@ -143,12 +150,68 @@ function getTimestamp(): string {
   });
 }
 
+// LogPanel component
+interface LogPanelProps {
+  logs: LogEntry[];
+}
+
+function LogPanel({ logs }: LogPanelProps) {
+  return (
+    <div className="log-panel" aria-label="Message Logs">
+      <div className="log-panel-header">
+        <span className="log-panel-title">Message Logs</span>
+        <span className="log-panel-count">{logs.length} entries</span>
+      </div>
+      <div className="log-panel-body">
+        {logs.length === 0 ? (
+          <div className="log-empty">No messages logged yet.</div>
+        ) : (
+          logs.map((entry, i) => (
+            <div key={i} className={`log-entry log-entry--${entry.direction.toLowerCase()}`}>
+              <span className="log-badge">{entry.direction}</span>
+              <span className="log-time">
+                {new Date(entry.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false,
+                })}
+              </span>
+              <span className="log-message">{entry.message}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Main App Component
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Polling logs
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/logs');
+        if (res.ok) {
+          const data = await res.json();
+          setLogs(data.logs);
+        }
+      } catch (error) {
+        // silently ignore — backend may not be running yet
+      }
+    };
+
+    fetchLogs(); // immediate first fetch
+    const interval = setInterval(fetchLogs, 3000);
+    return () => clearInterval(interval); // cleanup on unmount
+  }, []);
 
   // Auto-scroll logic
   useEffect(() => {
@@ -219,6 +282,7 @@ function App() {
       <ChatHeader />
       <MessageList messages={messages} messagesEndRef={messagesEndRef} isLoading={isLoading} />
       <MessageInput input={input} setInput={setInput} onSend={handleSend} />
+      <LogPanel logs={logs} />
     </div>
   );
 }
