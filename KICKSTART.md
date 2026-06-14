@@ -102,12 +102,12 @@ Create runnable frontend and backend applications.
 
 ### Tasks
 
-* [ ] Create frontend project using React + Vite + TypeScript
-* [ ] Create backend project using Express + TypeScript
-* [ ] Configure development scripts
-* [ ] Configure local ports
-* [ ] Verify frontend starts
-* [ ] Verify backend starts
+* [x] Create frontend project using React + Vite + TypeScript
+* [x] Create backend project using Express + TypeScript
+* [x] Configure development scripts
+* [x] Configure local ports
+* [x] Verify frontend starts
+* [x] Verify backend starts
 
 ### Success Criteria
 
