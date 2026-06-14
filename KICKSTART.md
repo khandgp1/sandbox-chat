@@ -222,12 +222,12 @@ Chat Window
 
 ### Tasks
 
-* [ ] Connect UI to API
-* [ ] Send user message
-* [ ] Receive backend response
-* [ ] Display response in chat
-* [ ] Handle loading state
-* [ ] Handle network errors
+* [x] Connect UI to API
+* [x] Send user message
+* [x] Receive backend response
+* [x] Display response in chat
+* [x] Handle loading state
+* [x] Handle network errors
 
 ### Success Criteria
 

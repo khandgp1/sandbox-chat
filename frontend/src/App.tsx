@@ -49,14 +49,28 @@ function MessageBubble({ message }: MessageBubbleProps) {
   );
 }
 
+// TypingIndicator component
+function TypingIndicator() {
+  return (
+    <div className="message-row message-row--bot">
+      <div className="bubble bubble--bot typing-indicator">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  );
+}
+
 // MessageList component
 interface MessageListProps {
   messages: Message[];
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  isLoading: boolean;
 }
 
-function MessageList({ messages, messagesEndRef }: MessageListProps) {
-  if (messages.length === 0) {
+function MessageList({ messages, messagesEndRef, isLoading }: MessageListProps) {
+  if (messages.length === 0 && !isLoading) {
     return (
       <div className="empty-state">
         <div className="empty-state-icon">🤖</div>
@@ -73,6 +87,7 @@ function MessageList({ messages, messagesEndRef }: MessageListProps) {
       {messages.map((msg) => (
         <MessageBubble key={msg.id} message={msg} />
       ))}
+      {isLoading && <TypingIndicator />}
       <div ref={messagesEndRef} />
     </div>
   );
@@ -119,10 +134,20 @@ function MessageInput({ input, setInput, onSend }: MessageInputProps) {
   );
 }
 
+// Helper to get formatted timestamp (HH:MM)
+function getTimestamp(): string {
+  return new Date().toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
 // Main App Component
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll logic
@@ -130,16 +155,11 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmedInput = input.trim();
     if (!trimmedInput) return;
 
-    const timestamp = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-
+    const timestamp = getTimestamp();
     const userMsgId = Date.now();
     const newUserMessage: Message = {
       id: userMsgId,
@@ -150,30 +170,54 @@ function App() {
 
     setMessages((prev) => [...prev, newUserMessage]);
     setInput('');
+    setIsLoading(true);
 
-    // Trigger mock bot reply
-    setTimeout(() => {
-      const botTimestamp = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
+    try {
+      const res = await fetch('http://localhost:3001/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'sandbox-user',
+          message: trimmedInput,
+        }),
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const botTimestamp = getTimestamp();
+
       const newBotMessage: Message = {
-        id: userMsgId + 1, // distinct ID
+        id: Date.now(),
         sender: 'bot',
-        text: 'Hello from the bot 🤖',
+        text: data.message,
         timestamp: botTimestamp,
       };
 
       setMessages((prev) => [...prev, newBotMessage]);
-    }, 100); // quick reply delay
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const botTimestamp = getTimestamp();
+      const newBotMessage: Message = {
+        id: Date.now(),
+        sender: 'bot',
+        text: '⚠️ Failed to reach the bot. Try again.',
+        timestamp: botTimestamp,
+      };
+      setMessages((prev) => [...prev, newBotMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="chat-root">
       <ChatHeader />
-      <MessageList messages={messages} messagesEndRef={messagesEndRef} />
+      <MessageList messages={messages} messagesEndRef={messagesEndRef} isLoading={isLoading} />
       <MessageInput input={input} setInput={setInput} onSend={handleSend} />
     </div>
   );
