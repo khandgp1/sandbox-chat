@@ -182,13 +182,13 @@ Submits message.
 
 ### Tasks
 
-* [ ] Create chat layout
-* [ ] Create message list component
-* [ ] Create input component
-* [ ] Create send button
-* [ ] Display user messages
-* [ ] Display bot responses
-* [ ] Auto-scroll to latest message
+* [x] Create chat layout
+* [x] Create message list component
+* [x] Create input component
+* [x] Create send button
+* [x] Display user messages
+* [x] Display bot responses
+* [x] Auto-scroll to latest message
 
 ### Success Criteria
 
