@@ -148,11 +148,11 @@ POST /message
 
 ### Tasks
 
-* [ ] Create POST /message endpoint
-* [ ] Validate request payload
-* [ ] Return placeholder response
-* [ ] Add basic error handling
-* [ ] Add request logging
+* [x] Create POST /message endpoint
+* [x] Validate request payload
+* [x] Return placeholder response
+* [x] Add basic error handling
+* [x] Add request logging
 
 ### Success Criteria
 
