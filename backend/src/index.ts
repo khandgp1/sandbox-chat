@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import { generateReply } from './services/botEngine';
+
 
 const app = express();
 const PORT = 3001;
@@ -52,7 +54,7 @@ app.post('/message', (req: Request, res: Response) => {
   logs.push(incoming);
 
   // Compute response
-  const reply = `You said: ${message.trim()}`;
+  const reply = generateReply(message);
 
   // Log outgoing response in memory
   const outgoing: LogEntry = {

@@ -290,10 +290,10 @@ backend/
 
 ### Tasks
 
-* [ ] Create botEngine service
-* [ ] Move response generation into service
-* [ ] Keep API route thin
-* [ ] Add unit-testable interface
+* [x] Create botEngine service
+* [x] Move response generation into service
+* [x] Keep API route thin
+* [x] Add unit-testable interface
 
 ### Example
 
