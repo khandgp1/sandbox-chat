@@ -1,4 +1,5 @@
-import { Message } from './conversationStore';
+import { ChatMessage, BotReply } from '../types/chatMessage';
+import { ConversationEntry } from './conversationStore';
 
 /**
  * Bot Engine
@@ -8,16 +9,25 @@ import { Message } from './conversationStore';
  */
 const ECHO_COUNT = 3;
 
-export function generateReply(message: string, history: Message[]): string {
+export function generateReply(message: ChatMessage, history: ConversationEntry[]): BotReply {
+  const trimmed = message.text.trim();
+  let text = '';
+  
   if (history.length === 0) {
-    return `You said: "${message.trim()}". No prior context.`;
+    text = `You said: "${trimmed}". No prior context.`;
+  } else {
+    const recent = history
+      .slice(-ECHO_COUNT)
+      .map((m) => `[${m.role}] ${m.text}`)
+      .join(' | ');
+
+    text = `You said: "${trimmed}". Recent context: ${recent}`;
   }
 
-  const recent = history
-    .slice(-ECHO_COUNT)
-    .map((m) => `[${m.role}] ${m.text}`)
-    .join(' | ');
-
-  return `You said: "${message.trim()}". Recent context: ${recent}`;
+  return {
+    text,
+    timestamp: new Date().toISOString(),
+  };
 }
+
 

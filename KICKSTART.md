@@ -356,10 +356,10 @@ type ChatMessage = {
 
 ### Tasks
 
-* [ ] Create shared message model
-* [ ] Standardize request structure
-* [ ] Standardize response structure
-* [ ] Document future Telegram mapping
+* [x] Create shared message model
+* [x] Standardize request structure
+* [x] Standardize response structure
+* [x] Document future Telegram mapping
 
 ### Success Criteria
 

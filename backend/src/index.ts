@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { generateReply } from './services/botEngine';
 import { getHistory, appendMessage } from './services/conversationStore';
+import { ChatMessage, BotReply } from './types/chatMessage';
 
 
 const app = express();
@@ -42,40 +43,51 @@ app.post('/message', (req: Request, res: Response) => {
     return res.status(400).json({ error: 'message is required' });
   }
 
+  // Construct standardized ChatMessage
+  const chatMessage: ChatMessage = {
+    userId,
+    text: message.trim(),
+    timestamp: new Date().toISOString(),
+  };
+
   // Log to console
-  console.log(`[POST /message] userId=${userId} | message="${message}"`);
+  console.log(`[POST /message] userId=${chatMessage.userId} | message="${chatMessage.text}"`);
 
   // Log incoming message in memory
-  const timestamp = new Date().toISOString();
   const incoming: LogEntry = {
     direction: 'INCOMING',
-    message: message.trim(),
-    userId,
-    timestamp,
+    message: chatMessage.text,
+    userId: chatMessage.userId,
+    timestamp: chatMessage.timestamp,
   };
   logs.push(incoming);
 
   // Fetch history before generating the reply
-  const history = getHistory(userId);
+  const history = getHistory(chatMessage.userId);
 
   // Compute response
-  const reply = generateReply(message, history);
+  const reply: BotReply = generateReply(chatMessage, history);
 
   // Store message and response in conversation history
-  appendMessage(userId, { role: 'user', text: message.trim(), timestamp });
-  appendMessage(userId, { role: 'bot', text: reply, timestamp: new Date().toISOString() });
+  appendMessage(chatMessage.userId, { role: 'user', ...chatMessage });
+  appendMessage(chatMessage.userId, {
+    role: 'bot',
+    userId: chatMessage.userId,
+    text: reply.text,
+    timestamp: reply.timestamp,
+  });
 
   // Log outgoing response in memory
   const outgoing: LogEntry = {
     direction: 'OUTGOING',
-    message: reply,
-    userId,
-    timestamp: new Date().toISOString(),
+    message: reply.text,
+    userId: chatMessage.userId,
+    timestamp: reply.timestamp,
   };
   logs.push(outgoing);
 
   // Respond
-  return res.json({ message: reply });
+  return res.json({ message: reply.text });
 });
 
 app.listen(PORT, () => {
