@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import './App.css';
 import './chat.css';
 
+import { API_BASE_URL } from './config/api';
+
 // Types
 interface Message {
   id: number;
@@ -198,12 +200,12 @@ function App() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await fetch('http://localhost:3001/logs');
+        const res = await fetch(`${API_BASE_URL}/logs`);
         if (res.ok) {
           const data = await res.json();
           setLogs(data.logs);
         }
-      } catch (error) {
+      } catch {
         // silently ignore — backend may not be running yet
       }
     };
@@ -236,7 +238,7 @@ function App() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://localhost:3001/message', {
+      const res = await fetch(`${API_BASE_URL}/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

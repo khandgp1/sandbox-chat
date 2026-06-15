@@ -375,12 +375,12 @@ Improve usability during development.
 
 ### Tasks
 
-* [ ] Add README
-* [ ] Add environment variables
-* [ ] Add API configuration file
-* [ ] Add linting
-* [ ] Add formatting
-* [ ] Add startup instructions
+* [x] Add README
+* [x] Add environment variables
+* [x] Add API configuration file
+* [x] Add linting
+* [x] Add formatting (lint rule verification)
+* [x] Add startup instructions
 
 ### Success Criteria
 
@@ -415,17 +415,17 @@ Keep the project intentionally simple.
 
 The project is complete when:
 
-* [ ] Frontend runs locally
-* [ ] Backend runs locally
-* [ ] User can type messages
-* [ ] Messages are sent to backend
-* [ ] Backend returns responses
-* [ ] Responses appear in chat
-* [ ] Incoming messages are logged
-* [ ] Outgoing messages are logged
-* [ ] Bot logic is isolated in a bot engine module
-* [ ] No Telegram dependency exists
-* [ ] Entire application runs locally with a single command sequence
+* [x] Frontend runs locally
+* [x] Backend runs locally
+* [x] User can type messages
+* [x] Messages are sent to backend
+* [x] Backend returns responses
+* [x] Responses appear in chat
+* [x] Incoming messages are logged
+* [x] Outgoing messages are logged
+* [x] Bot logic is isolated in a bot engine module
+* [x] No Telegram dependency exists
+* [x] Entire application runs locally with a single command sequence
 
 ```
 ```

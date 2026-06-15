@@ -11,7 +11,7 @@ const ECHO_COUNT = 3;
 
 export function generateReply(message: ChatMessage, history: ConversationEntry[]): BotReply {
   const trimmed = message.text.trim();
-  let text = '';
+  let text: string;
   
   if (history.length === 0) {
     text = `You said: "${trimmed}". No prior context.`;
