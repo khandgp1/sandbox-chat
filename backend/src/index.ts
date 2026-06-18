@@ -1,8 +1,15 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import { generateReply } from './services/botEngine';
 import { getHistory, appendMessage } from './services/conversationStore';
+import { storePendingReply, consumePendingReply } from './services/replyStore';
+import path from 'path';
 import { ChatMessage, BotReply } from './types/chatMessage';
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+const BOT_WEBHOOK_URL = process.env.BOT_WEBHOOK_URL ?? null;
 
 
 const app = express();
@@ -32,7 +39,7 @@ app.get('/logs', (_req: Request, res: Response) => {
 });
 
 // POST /message
-app.post('/message', (req: Request, res: Response) => {
+app.post('/message', async (req: Request, res: Response) => {
   const { userId, message } = req.body;
 
   // Validate
@@ -62,10 +69,39 @@ app.post('/message', (req: Request, res: Response) => {
   };
   logs.push(incoming);
 
-  // Fetch history before generating the reply
+  // Fetch history before generating/forwarding the reply
   const history = getHistory(chatMessage.userId);
 
-  // Compute response
+  if (BOT_WEBHOOK_URL) {
+    try {
+      const webhookResponse = await fetch(BOT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: chatMessage.userId,
+          message: chatMessage.text,
+          history,
+        }),
+      });
+
+      if (!webhookResponse.ok) {
+        console.error(`[POST /message] Webhook error: Bot server returned status ${webhookResponse.status}`);
+        return res.status(502).json({ error: 'Failed to reach the bot server.' });
+      }
+    } catch (error) {
+      console.error('[POST /message] Webhook error:', error);
+      return res.status(502).json({ error: 'Failed to reach the bot server.' });
+    }
+
+    // Store user message in conversation history
+    appendMessage(chatMessage.userId, { role: 'user', ...chatMessage });
+
+    return res.json({ status: 'forwarded' });
+  }
+
+  // Fallback mode: Compute response synchronously
   const reply: BotReply = generateReply(chatMessage, history);
 
   // Store message and response in conversation history
@@ -89,6 +125,52 @@ app.post('/message', (req: Request, res: Response) => {
   // Respond
   return res.json({ message: reply.text });
 });
+
+// POST /incoming-reply
+app.post('/incoming-reply', (req: Request, res: Response) => {
+  const { userId, message } = req.body;
+
+  if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+    return res.status(400).json({ error: 'userId is required' });
+  }
+  if (!message || typeof message !== 'string' || message.trim() === '') {
+    return res.status(400).json({ error: 'message is required' });
+  }
+
+  const timestamp = new Date().toISOString();
+
+  // Log outgoing response in memory
+  const outgoing: LogEntry = {
+    direction: 'OUTGOING',
+    message: message.trim(),
+    userId,
+    timestamp,
+  };
+  logs.push(outgoing);
+
+  // Store message in conversation history
+  appendMessage(userId, {
+    role: 'bot',
+    userId,
+    text: message.trim(),
+    timestamp,
+  });
+
+  // Store in replyStore for polling
+  storePendingReply(userId, message.trim());
+
+  console.log(`[POST /incoming-reply] Received reply for userId=${userId} | message="${message.trim()}"`);
+
+  return res.sendStatus(200);
+});
+
+// GET /incoming-reply
+app.get('/incoming-reply', (req: Request, res: Response) => {
+  const userId = (req.query.userId as string) || 'sandbox-user';
+  const message = consumePendingReply(userId);
+  return res.json({ message });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);

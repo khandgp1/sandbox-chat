@@ -215,6 +215,32 @@ function App() {
     return () => clearInterval(interval); // cleanup on unmount
   }, []);
 
+  // Poll for async bot replies (Webhook Relay Mode)
+  useEffect(() => {
+    const pollForReply = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/incoming-reply?userId=sandbox-user`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.message) {
+            const botMessage: Message = {
+              id: Date.now(),
+              sender: 'bot',
+              text: data.message,
+              timestamp: getTimestamp(),
+            };
+            setMessages((prev) => [...prev, botMessage]);
+          }
+        }
+      } catch {
+        // silently ignore
+      }
+    };
+
+    const interval = setInterval(pollForReply, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Auto-scroll logic
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
@@ -254,16 +280,16 @@ function App() {
       }
 
       const data = await res.json();
-      const botTimestamp = getTimestamp();
-
-      const newBotMessage: Message = {
-        id: Date.now(),
-        sender: 'bot',
-        text: data.message,
-        timestamp: botTimestamp,
-      };
-
-      setMessages((prev) => [...prev, newBotMessage]);
+      if (data.message) {
+        const botTimestamp = getTimestamp();
+        const newBotMessage: Message = {
+          id: Date.now(),
+          sender: 'bot',
+          text: data.message,
+          timestamp: botTimestamp,
+        };
+        setMessages((prev) => [...prev, newBotMessage]);
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
       const botTimestamp = getTimestamp();
