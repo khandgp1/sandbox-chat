@@ -13,7 +13,7 @@ const BOT_WEBHOOK_URL = process.env.BOT_WEBHOOK_URL ?? null;
 
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
 
 interface LogEntry {
   direction: 'INCOMING' | 'OUTGOING';
@@ -40,7 +40,7 @@ app.get('/logs', (_req: Request, res: Response) => {
 
 // POST /message
 app.post('/message', async (req: Request, res: Response) => {
-  const { userId, message } = req.body;
+  const { userId, message, timestamp } = req.body;
 
   // Validate
   if (!userId || typeof userId !== 'string' || userId.trim() === '') {
@@ -54,7 +54,7 @@ app.post('/message', async (req: Request, res: Response) => {
   const chatMessage: ChatMessage = {
     userId,
     text: message.trim(),
-    timestamp: new Date().toISOString(),
+    timestamp: typeof timestamp === 'string' && timestamp ? timestamp : new Date().toISOString(),
   };
 
   // Log to console
@@ -82,7 +82,7 @@ app.post('/message', async (req: Request, res: Response) => {
         body: JSON.stringify({
           userId: chatMessage.userId,
           message: chatMessage.text,
-          history,
+          timestamp: chatMessage.timestamp,
         }),
       });
 

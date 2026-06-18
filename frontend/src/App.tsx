@@ -22,7 +22,15 @@ interface LogEntry {
 // Sub-components
 
 // ChatHeader component
-function ChatHeader() {
+interface ChatHeaderProps {
+  simulatedDate: Date;
+  onIncrementDate: () => void;
+}
+
+function ChatHeader({ simulatedDate, onIncrementDate }: ChatHeaderProps) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const formattedDate = `${months[simulatedDate.getMonth()]} ${simulatedDate.getDate()}, ${simulatedDate.getFullYear()}`;
+
   return (
     <header className="chat-header">
       <div className="chat-header-info">
@@ -32,11 +40,33 @@ function ChatHeader() {
           <span>bot • online</span>
         </div>
       </div>
+      <div className="chat-header-simulated-date">
+        <span className="simulated-date-label">Simulated Date:</span>
+        <span className="simulated-date-value">{formattedDate}</span>
+        <button className="increment-date-btn" onClick={onIncrementDate} aria-label="Increment date by 1 day">
+          +1 Day
+        </button>
+      </div>
       <div className="chat-header-actions">
         <span>Telegram Sandbox</span>
       </div>
     </header>
   );
+}
+
+function formatMessageTimestamp(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${month} ${day}, ${hours}:${minutes}`;
+  } catch {
+    return dateStr;
+  }
 }
 
 // MessageBubble component
@@ -51,7 +81,7 @@ function MessageBubble({ message }: MessageBubbleProps) {
       <div className={`bubble ${isUser ? 'bubble--user' : 'bubble--bot'}`}>
         <div>{message.text}</div>
         <div className="bubble-meta">
-          <span>{message.timestamp}</span>
+          <span>{formatMessageTimestamp(message.timestamp)}</span>
         </div>
       </div>
     </div>
@@ -143,14 +173,7 @@ function MessageInput({ input, setInput, onSend }: MessageInputProps) {
   );
 }
 
-// Helper to get formatted timestamp (HH:MM)
-function getTimestamp(): string {
-  return new Date().toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-}
+
 
 // LogPanel component
 interface LogPanelProps {
@@ -196,6 +219,24 @@ function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Simulated date offset state
+  const [dateOffsetDays, setDateOffsetDays] = useState(0);
+  const dateOffsetDaysRef = useRef(dateOffsetDays);
+
+  useEffect(() => {
+    dateOffsetDaysRef.current = dateOffsetDays;
+  }, [dateOffsetDays]);
+
+  const getSimulatedDate = (): Date => {
+    const d = new Date();
+    d.setDate(d.getDate() + dateOffsetDays);
+    return d;
+  };
+
+  const handleIncrementDate = () => {
+    setDateOffsetDays((prev) => prev + 1);
+  };
+
   // Polling logs
   useEffect(() => {
     const fetchLogs = async () => {
@@ -223,11 +264,14 @@ function App() {
         if (res.ok) {
           const data = await res.json();
           if (data.message) {
+            const replyDate = new Date();
+            replyDate.setDate(replyDate.getDate() + dateOffsetDaysRef.current);
+
             const botMessage: Message = {
               id: Date.now(),
               sender: 'bot',
               text: data.message,
-              timestamp: getTimestamp(),
+              timestamp: replyDate.toISOString(),
             };
             setMessages((prev) => [...prev, botMessage]);
           }
@@ -250,7 +294,7 @@ function App() {
     const trimmedInput = input.trim();
     if (!trimmedInput) return;
 
-    const timestamp = getTimestamp();
+    const timestamp = getSimulatedDate().toISOString();
     const userMsgId = Date.now();
     const newUserMessage: Message = {
       id: userMsgId,
@@ -272,6 +316,7 @@ function App() {
         body: JSON.stringify({
           userId: 'sandbox-user',
           message: trimmedInput,
+          timestamp,
         }),
       });
 
@@ -281,23 +326,21 @@ function App() {
 
       const data = await res.json();
       if (data.message) {
-        const botTimestamp = getTimestamp();
         const newBotMessage: Message = {
           id: Date.now(),
           sender: 'bot',
           text: data.message,
-          timestamp: botTimestamp,
+          timestamp: getSimulatedDate().toISOString(),
         };
         setMessages((prev) => [...prev, newBotMessage]);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
-      const botTimestamp = getTimestamp();
       const newBotMessage: Message = {
         id: Date.now(),
         sender: 'bot',
         text: '⚠️ Failed to reach the bot. Try again.',
-        timestamp: botTimestamp,
+        timestamp: getSimulatedDate().toISOString(),
       };
       setMessages((prev) => [...prev, newBotMessage]);
     } finally {
@@ -307,7 +350,7 @@ function App() {
 
   return (
     <div className="chat-root">
-      <ChatHeader />
+      <ChatHeader simulatedDate={getSimulatedDate()} onIncrementDate={handleIncrementDate} />
       <MessageList messages={messages} messagesEndRef={messagesEndRef} isLoading={isLoading} />
       <MessageInput input={input} setInput={setInput} onSend={handleSend} />
       <LogPanel logs={logs} />

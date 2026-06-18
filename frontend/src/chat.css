@@ -405,3 +405,45 @@
   color: #b0b0c8;
   word-break: break-word;
 }
+
+/* Simulated Date Controls */
+.chat-header-simulated-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.simulated-date-label {
+  color: var(--text-muted);
+}
+
+.simulated-date-value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.increment-date-btn {
+  background-color: var(--accent);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.increment-date-btn:hover {
+  background-color: var(--accent-hover);
+}
+
+.increment-date-btn:active {
+  transform: scale(0.95);
+}
+
